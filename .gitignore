@@ -1,0 +1,6 @@
+# ignore ALL files in ANY directory named input_data
+node_modules/
+build/
+dist/
+package-lock.json
+
