@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import time
+# from streamlit_autorefresh import st_autorefresh
+
 from datetime import datetime
 
 # Path of the output excel file
@@ -10,10 +12,10 @@ file_path = "/mnt/eval_conscience_data.xlsx" # to run with .exe app
 st.set_page_config(layout="wide")
 
 # Initialize widget values
-if 'date' not in st.session_state:
-    st.session_state.date = datetime.today().date()
 if 'hour' not in st.session_state:
-    st.session_state.hour = datetime.now().time()
+    st.session_state.hour = None
+if 'minutes' not in st.session_state:
+    st.session_state.minutes = None
 if 'matricule' not in st.session_state:
     st.session_state.matricule = ""
 if 'evaluator' not in st.session_state:
@@ -29,18 +31,8 @@ if 'changement' not in st.session_state:
 if 'commentaire' not in st.session_state:
     st.session_state.commentaire = ""
 
-# Function to reset the session state
-def reset_widgets():
-    # reset widget values
-    st.session_state.date = datetime.today().date()
-    st.session_state.hour = datetime.now().time()
-    st.session_state.matricule = ""
-    st.session_state.evaluator = None
-    st.session_state.presence = 0.0
-    st.session_state.eveil = 0.0
-    st.session_state.conscient = None
-    st.session_state.changement = None
-    st.session_state.commentaire = ""
+hour_list = [f"{i:02}" for i in range(24)]  # '00' to '23'
+minutes_list = [f"{i:02}" for i in range(60)]  # '00' to '59'
 
 #-----------------------------------------------------------------------
 # Custom CSS to hide settings and custom the slider widget
@@ -106,39 +98,42 @@ st.title("Échelle d'évalution subjective de la conscience")
 col1, col2, col3= st.columns([8, 1, 8])
 
 with col1 :
-    inp1, inp2, inp3= st.columns([1, 1, 1])
+    inp1, inp2, inp3, inp4= st.columns([1, 1, 1, 3])
+    
     with inp1:
-        date = st.date_input(
-            label="Date", 
-            format="DD/MM/YYYY", 
-            key="date"
-        )
+        hour = st.selectbox(
+            label="Heures", 
+            options= hour_list,
+            key="hour",
+            placeholder=""
+        )       
     with inp2:
-        hour = st.time_input(
-            label="Heure", 
-            step=60, 
-            key="hour"
+        minutes = st.selectbox(
+            label="Minutes", 
+            options= minutes_list, 
+            key="minutes",
+            placeholder=""
         )
     with inp3:
         matricule = st.text_input( 
             label="Matricule HCL", 
             key="matricule"
+        )  
+    with inp4:
+        options = [
+        "Médecin", 
+        "MK", 
+        "IDE", 
+        "AS",
+        "Proche"
+        ]
+
+        evaluator = st.radio(
+            label="Evaluateur", 
+            options=options, 
+            horizontal=True, 
+            key="evaluator"
         )
-
-    options = [
-    "Médecin", 
-    "MK", 
-    "IDE", 
-    "AS",
-    "Proche"
-    ]
-
-    evaluator = st.radio(
-        label="Personne", 
-        options=options, 
-        horizontal=True, 
-        key="evaluator"
-    )
 
     st.divider()
 
@@ -154,7 +149,7 @@ with col1 :
         max_value=1.0,
         key="presence"
     )
-    pre1, pre2, pre3 = st.columns([1,7,1])
+    pre1, pre2, pre3 = st.columns([1,6,1])
     with pre1 :
         st.caption("ABSENT")
     with pre3 :
@@ -174,7 +169,7 @@ with col1 :
         key="eveil"
     )
 
-    ev1, ev2, ev3 = st.columns([1,7,1])
+    ev1, ev2, ev3 = st.columns([1,6,1])
     with ev1 :
         st.caption("ENDORMI")
     with ev3 :
@@ -213,18 +208,16 @@ with col3 :
     st.divider()
     #-----------------------------------------------------------------------
 
-    st.info("Assurez-vous d'avoir fermé le fichier Excel '`eval_conscience_data.xlsx`' présent dans le dossier '`C:/Users/(User)/conscience_data/`' avant de cliquer sur le bouton '`Valider`'") 
-
-
     # Vérifier si tous les champs sont remplis
-    all_filled = date and hour and matricule.strip() and evaluator and conscient and changement
+    # all_filled = date and hour and matricule.strip() and evaluator and conscient and changement
+    all_filled = hour and minutes and matricule.strip() and evaluator and conscient and changement
 
     # Button to validate and save
     if st.button("Valider", disabled=not all_filled):
         # Prepare the data to be saved
         new_data = {
-            "date": date,
-            "heure": hour,
+            "date": datetime.today().date(),
+            "heure": f"{hour}:{minutes}",
             "matricule": matricule,
             "evaluateur": evaluator,
             "presence": presence,
@@ -251,7 +244,10 @@ with col3 :
         df.to_excel(file_path, index=False)
 
         # Inform the user that the data has been saved
-        st.success("Les données ont été enregistrées avec succès dans le fichier Excel ")
+        st.success("""
+            Les données ont été enregistrées avec succès. 
+            Merci pour votre participation !       
+                   """)
         
         # Wait for 5 seconds
         time.sleep(5)
@@ -259,6 +255,5 @@ with col3 :
         for key in st.session_state.keys():
             del st.session_state[key]
 
-        reset_widgets()
         st.rerun()
 
