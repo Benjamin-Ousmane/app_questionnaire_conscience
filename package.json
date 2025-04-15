@@ -28,7 +28,7 @@
         "requirementsTxtFiles": ["requirements.txt"],
         "nodeJsWorker": true,
         "nodefsMountpoints": {
-          "/mnt": "{{home}}/conscience_data"
+          "/mnt": "D:"
         }
       }
     }

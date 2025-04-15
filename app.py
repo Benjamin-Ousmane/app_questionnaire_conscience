@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import time
-# from streamlit_autorefresh import st_autorefresh
 
 from datetime import datetime
 
@@ -30,6 +29,12 @@ if 'changement' not in st.session_state:
     st.session_state.changement = None
 if 'commentaire' not in st.session_state:
     st.session_state.commentaire = ""
+    
+# Pour désactiver le button 
+if 'run_button' in st.session_state and st.session_state.run_button is True:
+    st.session_state.running = True
+else:
+    st.session_state.running = False
 
 hour_list = [f"{i:02}" for i in range(24)]  # '00' to '23'
 minutes_list = [f"{i:02}" for i in range(60)]  # '00' to '59'
@@ -144,7 +149,7 @@ with col1 :
 
 
     presence = st.slider(
-        label="Indiquez l'intensité de présence sur cette échelle",
+        label="Déplacer le curseur sur l'échelle pour indiquer l'intensité de PRÉSENCE du patient",
         min_value=-1.0,
         max_value=1.0,
         key="presence"
@@ -163,7 +168,7 @@ with col1 :
     st.caption("Se reférant aux différents niveaux d'éveil : du sommeil profond au total éveil")
 
     eveil = st.slider(
-        label="Indiquez l'intensité d'éveil sur cette échelle", 
+        label="Déplacer le curseur sur l'échelle pour indiquer l'intensité d'ÉVEIL du patient", 
         min_value=-1.0,
         max_value=1.0,
         key="eveil"
@@ -209,12 +214,11 @@ with col3 :
     #-----------------------------------------------------------------------
 
     # Vérifier si tous les champs sont remplis
-    # all_filled = date and hour and matricule.strip() and evaluator and conscient and changement
     all_filled = hour and minutes and matricule.strip() and evaluator and conscient and changement
 
     # Button to validate and save
-    if st.button("Valider", disabled=not all_filled):
-        # Prepare the data to be saved
+    if st.button("Valider", disabled=not all_filled or st.session_state.running, key='run_button'):
+
         new_data = {
             "date": datetime.today().date(),
             "heure": f"{hour}:{minutes}",
@@ -224,7 +228,8 @@ with col3 :
             "eveil": eveil,
             "conscient": conscient,
             "changement": changement,
-            "commentaire" : commentaire
+            "commentaire" : commentaire,
+            "temps_validation" : datetime.today()
         }
         
         # Check if the Excel file exists or create a new one
@@ -247,10 +252,10 @@ with col3 :
         st.success("""
             Les données ont été enregistrées avec succès. 
             Merci pour votre participation !       
-                   """)
+                   """, icon="✅")
         
-        # Wait for 5 seconds
-        time.sleep(5)
+        # Wait for 2 seconds
+        time.sleep(2)
 
         for key in st.session_state.keys():
             del st.session_state[key]

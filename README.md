@@ -75,6 +75,7 @@ If you want to change the path, update `{{home}}/conscience_data` in the `packag
       "nodeJsWorker": true,
       "nodefsMountpoints": {
         "/mnt": "{{home}}/conscience_data" 
+        // "/mnt": "D:" example for an USB 
       }
     }
   }
